@@ -1,13 +1,13 @@
-package com.example.d308vacationplanner.ui
+package com.example.d308vacationplanner.ui.alerts
 
-import android.app.Notification
+import android.R
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.example.d308vacationplanner.R
+import com.example.d308vacationplanner.ui.MainActivity
 
 class VacationAlertReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent){
@@ -32,7 +32,7 @@ class VacationAlertReceiver : BroadcastReceiver() {
         }
 
         val notification = NotificationCompat.Builder(context, "vacation_channel")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -42,4 +42,3 @@ class VacationAlertReceiver : BroadcastReceiver() {
         NotificationManagerCompat.from(context).notify((0..999999).random(),notification)
     }
 }
-

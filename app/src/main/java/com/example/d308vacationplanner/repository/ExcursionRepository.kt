@@ -44,4 +44,10 @@ class ExcursionRepository (application: Application){
             excursionDao.getExcursionCountForVacation(vacationId)
         }
     }
+    suspend fun getTotalSpent(vacationId: Long): Double {
+        return excursionDao.getTotalSpent(vacationId) ?: 0.0
+    }
+    fun getExcursionsByPrice(vacationId: Long): Flow<List<Excursion>>{
+        return excursionDao.getExcursionsByPrice(vacationId)
+    }
 }

@@ -1,5 +1,7 @@
-package com.example.d308vacationplanner.ui
+package com.example.d308vacationplanner.ui.navigation
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,12 +15,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.d308vacationplanner.repository.VacationRepository
+import com.example.d308vacationplanner.ui.alerts.AlertScheduler
+import com.example.d308vacationplanner.ui.screens.ExcursionDetailsScreen
+import com.example.d308vacationplanner.ui.screens.VacationDetailsScreen
+import com.example.d308vacationplanner.ui.screens.VacationListScreen
+import com.example.d308vacationplanner.ui.viewmodel.VacationViewModel
 
 
 @Composable
 fun AppNavGraph (navController: NavHostController){
-    val viewModel: VacationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val viewModel: VacationViewModel = viewModel()
     val context = LocalContext.current
 
     NavHost(navController, startDestination = "vacation_list") {
@@ -48,12 +56,17 @@ fun AppNavGraph (navController: NavHostController){
             if(id != 0L && vacation == null){
                 return@composable
             }
+
+            val totalSpent = excursions.sumOf {
+                it.price
+            }
+
             VacationDetailsScreen(
                 vacation = vacation,
                 excursions = excursions,
                 onSave = { v ->
-                    if(v.id == 0L){
-                        viewModel.addVacation(v){ newId ->
+                    if (v.id == 0L) {
+                        viewModel.addVacation(v) { newId ->
                             navController.popBackStack()
                             navController.navigate("vacation_details/$newId")
                         }
@@ -63,13 +76,14 @@ fun AppNavGraph (navController: NavHostController){
                     }
                 },
                 onDelete = { v ->
-                    viewModel.deleteVacation(v, object : VacationRepository.DeleteCallback{
-                        override fun onDeleteSuccess(){
-                            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    viewModel.deleteVacation(v, object : VacationRepository.DeleteCallback {
+                        override fun onDeleteSuccess() {
+                            Handler(Looper.getMainLooper()).post {
                                 navController.popBackStack()
                             }
                         }
-                        override fun onDeleteFailed(message: String){
+
+                        override fun onDeleteFailed(message: String) {
 
                         }
                     })
@@ -78,10 +92,10 @@ fun AppNavGraph (navController: NavHostController){
                 },
 
                 onAddExcursion = {
-                    navController.navigate("excursion_details/0?vacationId=$id")
+                    navController.navigate("excursion_details/0?vacationId=$id&totalSpent=$totalSpent")
                 },
                 onEditExcursion = { excursionId ->
-                    navController.navigate("excursion_details/$excursionId?vacationId=$id")
+                    navController.navigate("excursion_details/$excursionId?vacationId=$id&totalSpent=$totalSpent")
                 },
                 onSetAlerts = { v ->
                     AlertScheduler.scheduleAlert(context, v.startDate, v.title, "starting")
@@ -90,9 +104,10 @@ fun AppNavGraph (navController: NavHostController){
             )
         }
 
-        composable("excursion_details/{id}?vacationId={vacationId}") { backStack ->
+        composable("excursion_details/{id}?vacationId={vacationId}&totalSpent={totalSpent}") { backStack ->
             val id = backStack.arguments?.getString("id")!!.toLong()
             val vacationId = backStack.arguments?.getString("vacationId")!!.toLong()
+            val totalSpent = backStack.arguments?.getString("totalSpent")!!.toDouble()
             val excursionFlow = remember(id) { viewModel.getExcursion(id) }
             val excursion = excursionFlow.collectAsState().value
             val vacationFlow = remember(vacationId){ viewModel.getVacation(vacationId)}
@@ -106,6 +121,7 @@ fun AppNavGraph (navController: NavHostController){
                     excursion = excursion,
                     vacation = vacation,
                     vacationId = vacationId,
+                    totalSpent = totalSpent,
                     onSave = { update ->
                         if (update.id == 0L) {
                             viewModel.addExcursion(update.copy(vacationID = vacationId))

@@ -30,4 +30,11 @@ interface ExcursionDao {
 
     @Query("SELECT * FROM excursions WHERE id = :id LIMIT 1")
     fun getExcursionById(id: Long): Flow<Excursion?>
+
+    @Query("SELECT SUM(price) FROM excursions WHERE vacationID = :vacationID")
+    suspend fun getTotalSpent(vacationID: Long): Double?
+
+    @Query("SELECT * FROM excursions WHERE vacationID = :vacationID ORDER BY price DESC")
+    fun getExcursionsByPrice(vacationID: Long): Flow<List<Excursion>>
 }
+

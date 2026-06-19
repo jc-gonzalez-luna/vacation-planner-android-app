@@ -10,7 +10,8 @@ data class Vacation (
     val title: String,
     val hotel: String,
     val startDate: String,
-    val endDate: String
+    val endDate: String,
+    val budget: Double = 0.0
 
     )
 

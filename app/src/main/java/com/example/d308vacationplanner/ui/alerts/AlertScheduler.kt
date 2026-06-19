@@ -1,4 +1,4 @@
-package com.example.d308vacationplanner.ui
+package com.example.d308vacationplanner.ui.alerts
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -49,11 +49,10 @@ object AlertScheduler {
             )
         } catch (e: SecurityException){
             val settingIntent = Intent(
-                Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+            )
             settingIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(settingIntent)
         }
     }
 }
-
-

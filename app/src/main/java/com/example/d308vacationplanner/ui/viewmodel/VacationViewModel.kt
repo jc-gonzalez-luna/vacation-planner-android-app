@@ -1,5 +1,4 @@
-package com.example.d308vacationplanner.ui
-
+package com.example.d308vacationplanner.ui.viewmodel
 
 import android.app.Application
 import android.content.Context
@@ -7,12 +6,16 @@ import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.d308vacationplanner.entities.Excursion
-import com.example.d308vacationplanner.repository.VacationRepository
 import com.example.d308vacationplanner.entities.Vacation
 import com.example.d308vacationplanner.repository.ExcursionRepository
-import kotlinx.coroutines.flow.*
+import com.example.d308vacationplanner.repository.VacationRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
 
 class VacationViewModel (application: Application) : AndroidViewModel(application) {
     private val vacationRepository = VacationRepository(application)
@@ -21,6 +24,8 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
     val allVacations: StateFlow<List<Vacation>> = _allVacations.asStateFlow()
     private val _excursions = MutableStateFlow<List<Excursion>>(emptyList())
     val excursions: StateFlow<List<Excursion>> = _excursions.asStateFlow()
+    private val _totalSpent = MutableStateFlow(0.0)
+    val totalSpent: StateFlow<Double> = _totalSpent.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -58,9 +63,23 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             val list = excursionRepository.getExcursionsForVacation(vacationId)
             _excursions.value = list
+            loadTotalSpent(vacationId)
         }
     }
-    fun getExcursion(id: Long): StateFlow<Excursion?>{
+    fun loadExcursionsByPrice(vacationId: Long){
+        viewModelScope.launch {
+            excursionRepository.getExcursionsByPrice(vacationId).collect { list ->
+                _excursions.value = list
+            }
+        }
+    }
+    fun loadTotalSpent(vacationId: Long) {
+        viewModelScope.launch {
+            val total = excursionRepository.getTotalSpent(vacationId)
+            _totalSpent.value = total
+        }
+    }
+    fun getExcursion(id: Long): StateFlow<Excursion?> {
         return excursionRepository.getExcursionFlow(id)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
     }
@@ -85,6 +104,7 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
 
     fun clearExcursions(){
         _excursions.value = emptyList()
+        _totalSpent.value = 0.0
     }
     fun shareVacation(context: Context, vacation: Vacation){
         val shareText = """
@@ -104,4 +124,3 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
         context.startActivity(chooser)
     }
 }
-

@@ -13,7 +13,7 @@ import com.example.d308vacationplanner.entities.Vacation
 
 @Database(
         entities = [Vacation::class, Excursion::class],
-        version = 4,
+        version = 5,
         exportSchema = false
 )
 abstract class VacationDatabase : RoomDatabase (){

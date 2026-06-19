@@ -23,6 +23,8 @@ data class Excursion (
     val id: Long = 0,
     val vacationID: Long,
     val title: String,
-    val date: String
+    val date: String,
+    val price: Double,
+    val notes: String = ""
 )
 

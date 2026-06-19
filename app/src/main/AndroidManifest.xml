@@ -25,7 +25,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver android:name=".ui.VacationAlertReceiver" android:exported="false" />
+        <receiver android:name=".ui.alerts.VacationAlertReceiver" android:exported="false" />
     </application>
 
 </manifest>

@@ -1,4 +1,4 @@
-package com.example.d308vacationplanner.ui
+package com.example.d308vacationplanner.ui.screens
 
 import android.widget.Toast
 import androidx.compose.material3.*
@@ -11,8 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.d308vacationplanner.entities.Excursion
 import com.example.d308vacationplanner.entities.Vacation
+import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,11 +22,16 @@ fun ExcursionDetailsScreen (
     excursion: Excursion?,
     vacation: Vacation,
     vacationId: Long,
+    totalSpent: Double,
     onSave: (Excursion) ->  Unit,
     onDelete: (Excursion) -> Unit
 ) {
     var title by rememberSaveable { mutableStateOf("") }
     var date by rememberSaveable { mutableStateOf("") }
+    var price by rememberSaveable{ mutableStateOf(excursion?.price?.toString() ?: "") }
+    var notes by rememberSaveable { mutableStateOf(excursion?.notes ?: "")}
+
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -46,14 +53,19 @@ fun ExcursionDetailsScreen (
 
             LaunchedEffect(excursion?.id) {
                 if (excursion != null) {
-                    title = excursion?.title ?: ""
-                    date = excursion?.date ?: ""
+                    title = excursion.title
+                    date = excursion.date
+
+                    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
+                    price = currencyFormatter.format(excursion.price)
+                    notes = excursion.notes ?: ""
                 } else {
                     title = ""
                     date = ""
+                    price = ""
+                    notes = ""
                 }
             }
-            val context = LocalContext.current
 
             Column(modifier = Modifier.padding(16.dp)) {
                 OutlinedTextField(
@@ -66,6 +78,19 @@ fun ExcursionDetailsScreen (
                     value = date,
                     onValueChange = { date = it },
                     label = { Text("Excursion Date (MM/DD/YYYY)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Price")},
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it},
+                    label = { Text("Notes (optional")},
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(16.dp))
@@ -113,11 +138,47 @@ fun ExcursionDetailsScreen (
                         ).show()
                         return@Button
                     }
+                    val normalizedPrice = price
+                        .replace("$", "")
+                        .replace(",", "")
+                        .trim()
+                        .let { if (it.startsWith(".")) "0$it" else it }
+
+                    val priceValue = normalizedPrice.toDoubleOrNull()
+                    if(priceValue == null){
+                        Toast.makeText(context, "Price must be a valid number", Toast.LENGTH_LONG).show()
+                        return@Button
+                    }
+                    if (priceValue < 0){
+                        Toast.makeText(
+                            context,
+                            "Price cannot be negative",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        return@Button
+                    }
+                    val oldPrice = excursion?.price ?: 0.0
+                    val adjustedTotal = totalSpent - oldPrice
+                    val newTotal = adjustedTotal + priceValue
+                    if (newTotal > vacation.budget){
+                        Toast.makeText(
+                            context,
+                            "Cannot save excursion. This would exceed the vacation budget.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        return@Button
+                    }
+                    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
+                    val formattedPrice = currencyFormatter.format(priceValue)
+                    price = formattedPrice
+
                     val updated = Excursion(
                         id = excursion?.id ?: 0,
                         vacationID = vacationId,
                         title = title,
-                        date = date
+                        date = date,
+                        price = priceValue,
+                        notes = notes
                     )
                     onSave(updated)
                 }) { Text("Save") }
