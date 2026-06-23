@@ -11,7 +11,9 @@ data class Vacation (
     val hotel: String,
     val startDate: String,
     val endDate: String,
-    val budget: Double = 0.0
+    val budget: Double = 0.0,
+    val hotelCost: Double = 0.0,
+    val reminderDays: List<Int> = emptyList()
 
     )
 

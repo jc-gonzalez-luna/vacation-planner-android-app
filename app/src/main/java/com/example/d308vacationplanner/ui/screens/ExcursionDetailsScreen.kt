@@ -11,10 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.d308vacationplanner.entities.Excursion
 import com.example.d308vacationplanner.entities.Vacation
+import com.example.d308vacationplanner.ui.alerts.AlertScheduler
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,6 +97,12 @@ fun ExcursionDetailsScreen (
                 )
                 Spacer(Modifier.height(16.dp))
 
+                val previewDate = excursion?.let {
+                    it.date
+                }
+                previewDate?.let {
+                    Text("- Alert will fire on: $it")
+                }
                 Button(onClick = {
                     if (title.isBlank()) {
                         Toast.makeText(
@@ -184,7 +192,10 @@ fun ExcursionDetailsScreen (
                 }) { Text("Save") }
                 if (excursion != null) {
                     Spacer(Modifier.height(8.dp))
-                    Button(onClick = { onDelete(excursion) }) {
+                    Button(onClick = {
+                        AlertScheduler.cancelAlert(context, excursion.id.toInt())
+                        onDelete(excursion)
+                    }) {
                         Text("Delete")
                     }
                 }

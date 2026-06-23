@@ -16,20 +16,45 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.d308vacationplanner.entities.Excursion
 import com.example.d308vacationplanner.repository.VacationRepository
 import com.example.d308vacationplanner.ui.alerts.AlertScheduler
 import com.example.d308vacationplanner.ui.screens.ExcursionDetailsScreen
 import com.example.d308vacationplanner.ui.screens.VacationDetailsScreen
 import com.example.d308vacationplanner.ui.screens.VacationListScreen
+import com.example.d308vacationplanner.ui.utils.DateUtils
 import com.example.d308vacationplanner.ui.viewmodel.VacationViewModel
 
 
 @Composable
-fun AppNavGraph (navController: NavHostController){
+fun AppNavGraph (
+    navController: NavHostController,
+    deepLinkVacationId: Long = -1,
+    deepLinkExcursionId: Long = -1
+){
     val viewModel: VacationViewModel = viewModel()
     val context = LocalContext.current
 
-    NavHost(navController, startDestination = "vacation_list") {
+    LaunchedEffect(deepLinkVacationId, deepLinkExcursionId) {
+        if (deepLinkExcursionId != -1L){
+            navController.navigate(
+                "excursion_details/$deepLinkExcursionId?vacationId=0&totalSpent=0.0"
+            )
+        } else if(deepLinkVacationId != -1L){
+            navController.navigate("vacation_details/$deepLinkVacationId")
+        }
+    }
+    val startDestination =
+        when {
+            deepLinkExcursionId != -1L -> "excursion_details/$deepLinkExcursionId?vacationId=0&totalSpent=0.0"
+            deepLinkVacationId != -1L -> "vacation_details/$deepLinkVacationId"
+            else -> "vacation_list"
+        }
+
+    NavHost(navController = navController, startDestination = startDestination) {
+
+
+
         composable("vacation_list") {
             val vacations = viewModel.allVacations.collectAsState().value
 
@@ -40,7 +65,7 @@ fun AppNavGraph (navController: NavHostController){
             )
         }
         composable("vacation_details/{id}") { backStack ->
-            val id = backStack.arguments?.getString("id")!!.toLong()
+            val id = backStack.arguments?.getString("id")?.toLongOrNull() ?: 0L
             val vacationFlow = remember(id) { viewModel.getVacation(id) }
             val vacation = vacationFlow.collectAsState().value
 
@@ -54,6 +79,10 @@ fun AppNavGraph (navController: NavHostController){
 
             val excursions = viewModel.excursions.collectAsState().value
             if(id != 0L && vacation == null){
+                Text(
+                    "Loading...",
+                    modifier = Modifier.padding(16.dp)
+                )
                 return@composable
             }
 
@@ -97,17 +126,44 @@ fun AppNavGraph (navController: NavHostController){
                 onEditExcursion = { excursionId ->
                     navController.navigate("excursion_details/$excursionId?vacationId=$id&totalSpent=$totalSpent")
                 },
-                onSetAlerts = { v ->
-                    AlertScheduler.scheduleAlert(context, v.startDate, v.title, "starting")
-                    AlertScheduler.scheduleAlert(context, v.endDate, v.title, "ending")
+                onSetAlerts = { v, selectedDays ->
+                    val updateVacation = v.copy(reminderDays = selectedDays.toList())
+                    viewModel.updateVacation(updateVacation)
+
+                    selectedDays.forEach { daysBefore ->
+                        val alertDate = DateUtils.daysBefore(v.startDate, daysBefore)
+
+                        AlertScheduler.scheduleAlert(
+                            context,
+                            alertDate,
+                            v.title,
+                            "starting_soon_${daysBefore}",
+                            v.id
+                        )
+                    }
+
+                    AlertScheduler.scheduleAlert(
+                        context,
+                        v.startDate,
+                        v.title,
+                        "starting",
+                        v.id
+                    )
+                    AlertScheduler.scheduleAlert(
+                        context,
+                        v.endDate,
+                        v.title,
+                        "ending",
+                        v.id
+                    )
                 }
             )
         }
 
         composable("excursion_details/{id}?vacationId={vacationId}&totalSpent={totalSpent}") { backStack ->
-            val id = backStack.arguments?.getString("id")!!.toLong()
-            val vacationId = backStack.arguments?.getString("vacationId")!!.toLong()
-            val totalSpent = backStack.arguments?.getString("totalSpent")!!.toDouble()
+            val id = backStack.arguments?.getString("id")?.toLongOrNull() ?: 0L
+            val vacationId = backStack.arguments?.getString("vacationId")?.toLongOrNull() ?: 0L
+            val totalSpent = backStack.arguments?.getString("totalSpent")?.toDoubleOrNull() ?: 0.0
             val excursionFlow = remember(id) { viewModel.getExcursion(id) }
             val excursion = excursionFlow.collectAsState().value
             val vacationFlow = remember(vacationId){ viewModel.getVacation(vacationId)}
@@ -132,7 +188,8 @@ fun AppNavGraph (navController: NavHostController){
                             context,
                             update.date,
                             update.title,
-                            "excursion"
+                            "excursion",
+                            update.id
                         )
                         navController.popBackStack()
                     },

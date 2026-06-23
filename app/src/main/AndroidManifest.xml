@@ -18,14 +18,19 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.D308VacationPlanner"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver android:name=".ui.alerts.VacationAlertReceiver" android:exported="false" />
+        <receiver
+            android:name=".ui.alerts.VacationAlertReceiver"
+            android:exported="true"
+            android:enabled="true"
+            android:directBootAware="true"/>
     </application>
 
 </manifest>
