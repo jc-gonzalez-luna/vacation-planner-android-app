@@ -10,18 +10,24 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.d308vacationplanner.entities.Excursion
 import com.example.d308vacationplanner.repository.VacationRepository
 import com.example.d308vacationplanner.ui.alerts.AlertScheduler
 import com.example.d308vacationplanner.ui.screens.ExcursionDetailsScreen
 import com.example.d308vacationplanner.ui.screens.VacationDetailsScreen
 import com.example.d308vacationplanner.ui.screens.VacationListScreen
+import com.example.d308vacationplanner.ui.screens.VacationReportScreen
 import com.example.d308vacationplanner.ui.utils.DateUtils
 import com.example.d308vacationplanner.ui.viewmodel.VacationViewModel
 
@@ -34,22 +40,31 @@ fun AppNavGraph (
 ){
     val viewModel: VacationViewModel = viewModel()
     val context = LocalContext.current
+    var handleDeepLink by remember { mutableStateOf(false) }
 
     LaunchedEffect(deepLinkVacationId, deepLinkExcursionId) {
-        if (deepLinkExcursionId != -1L){
-            navController.navigate(
-                "excursion_details/$deepLinkExcursionId?vacationId=0&totalSpent=0.0"
-            )
-        } else if(deepLinkVacationId != -1L){
-            navController.navigate("vacation_details/$deepLinkVacationId")
+        if (!handleDeepLink){
+            handleDeepLink = true
+
+            if (deepLinkExcursionId != -1L){
+                navController.navigate(
+                    "excursion_details/$deepLinkExcursionId?vacationId=0&totalSpent=0.0"
+                )
+            } else if(deepLinkVacationId != -1L){
+                navController.navigate("vacation_details/$deepLinkVacationId")
+            }
         }
+
+
     }
-    val startDestination =
+    val startDestination = remember {
         when {
             deepLinkExcursionId != -1L -> "excursion_details/$deepLinkExcursionId?vacationId=0&totalSpent=0.0"
             deepLinkVacationId != -1L -> "vacation_details/$deepLinkVacationId"
             else -> "vacation_list"
         }
+    }
+
 
     NavHost(navController = navController, startDestination = startDestination) {
 
@@ -159,6 +174,9 @@ fun AppNavGraph (
                         "ending",
                         updateVacation.id
                     )
+                },
+                onViewReport = {
+                    navController.navigate("report/$id")
                 }
             )
         }
@@ -200,6 +218,26 @@ fun AppNavGraph (
                         viewModel.deleteExcursion(e)
                         navController.popBackStack()
                     }
+                )
+            }
+        }
+        composable(
+            route = "report/{vacationId}",
+            arguments = listOf(navArgument("vacationId"){ type = NavType.LongType})
+        ){ backStackEntry ->
+            val vacationId = backStackEntry.arguments!!.getLong("vacationId")
+
+            val vacationFlow = remember(vacationId){
+                viewModel.getVacation(vacationId)
+            }
+            val vacation by vacationFlow.collectAsState(initial = null)
+            val excursions by viewModel.getExcursionsForVacation(vacationId).collectAsState(initial = emptyList())
+
+            if (vacation != null){
+                VacationReportScreen(
+                    vacation = vacation!!,
+                    excursions = excursions,
+                    onBack = { navController.popBackStack() }
                 )
             }
         }

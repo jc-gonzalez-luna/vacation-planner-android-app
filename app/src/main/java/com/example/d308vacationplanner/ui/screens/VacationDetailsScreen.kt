@@ -61,7 +61,8 @@ fun VacationDetailsScreen (
     onDelete: (Vacation) -> Unit,
     onAddExcursion: () -> Unit,
     onEditExcursion: (Long) -> Unit,
-    onSetAlerts: (Vacation, Set<Int>) -> Unit
+    onSetAlerts: (Vacation, Set<Int>) -> Unit,
+    onViewReport: () -> Unit
 ) {
     val viewModel: VacationViewModel = viewModel()
     val totalSpent = excursions.sumOf { it.price }
@@ -339,6 +340,14 @@ fun VacationDetailsScreen (
                         showAlertConfirm = true }) {
                         Text("Set Alerts")
                     }
+                }
+            }
+            item {
+                Button(
+                    onClick = onViewReport,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("View Report")
                 }
             }
 

@@ -23,7 +23,7 @@ interface ExcursionDao {
     suspend fun delete(excursion: Excursion)
 
     @Query("SELECT * FROM excursions WHERE vacationID = :vacationID")
-    suspend fun getExcursionsForVacation(vacationID: Long): List<Excursion>
+    fun getExcursionsForVacation(vacationID: Long): Flow<List<Excursion>>
 
     @Query("SELECT COUNT(*) FROM excursions WHERE vacationID = :vacationID")
     suspend fun getExcursionCountForVacation(vacationID: Long): Int

@@ -5,6 +5,7 @@ import android.app.Application
 import com.example.d308vacationplanner.dao.ExcursionDao
 import com.example.d308vacationplanner.dao.VacationDao
 import com.example.d308vacationplanner.database.VacationDatabase
+import com.example.d308vacationplanner.entities.Excursion
 import com.example.d308vacationplanner.entities.Vacation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,6 +49,11 @@ class VacationRepository (application: Application) {
             }
         }
     }
+    fun getVacationById(id: Long) = vacationDao.getVacationById(id)
+
+    fun getExcursionsForVacation(vacationId: Long): Flow<List<Excursion>> =
+        excursionDao.getExcursionsForVacation(vacationId)
+
     interface DeleteCallback{
         fun onDeleteSuccess()
         fun onDeleteFailed(message: String)

@@ -34,11 +34,9 @@ class ExcursionRepository (application: Application){
             excursionDao.delete(excursion)
         }
     }
-    suspend fun getExcursionsForVacation(vacationId: Long): List<Excursion>{
-        return withContext(Dispatchers.IO){
+    fun getExcursionsForVacation(vacationId: Long): Flow<List<Excursion>> =
             excursionDao.getExcursionsForVacation(vacationId)
-        }
-    }
+
     suspend fun getExcursionCountForVacation(vacationId: Long): Int{
         return withContext(Dispatchers.IO){
             excursionDao.getExcursionCountForVacation(vacationId)

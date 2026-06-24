@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -71,9 +72,10 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
 
     fun loadExcursionsForVacation(vacationId: Long) {
         viewModelScope.launch {
-            val list = excursionRepository.getExcursionsForVacation(vacationId)
-            _excursions.value = list
-            loadTotalSpent(vacationId)
+            excursionRepository.getExcursionsForVacation(vacationId).collectLatest { list ->
+                _excursions.value = list
+                _totalSpent.value = list.sumOf { it.price }
+            }
         }
     }
 
@@ -169,7 +171,8 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
         reminderDays: Set<Int>
     ) {
         viewModelScope.launch {
-            val excursions = excursionRepository.getExcursionsForVacation(vacation.id)
+            excursionRepository.getExcursionsForVacation(vacation.id)
+                .collectLatest { excursions ->
 
             AlertScheduler.scheduleAllAlerts(
                 context = context,
@@ -178,6 +181,7 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
                 reminderDays = reminderDays,
                 excursions = excursions
             )
+        }
         }
 
     }
@@ -192,4 +196,8 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
         items.addAll(excursions)
         printSummaries(items)
     }
+
+
+    fun getExcursionsForVacation(vacationId: Long) =
+        excursionRepository.getExcursionsForVacation(vacationId)
 }
