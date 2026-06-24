@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun SortDropdown (current: String, onSelect: (String) -> Unit){
+fun ExcursionSortDropdown (current: String, onSelect: (String) -> Unit){
 
     var expanded by remember { mutableStateOf(false) }
 
@@ -47,6 +47,55 @@ fun SortDropdown (current: String, onSelect: (String) -> Unit){
                     expanded = false
                 }
             )
+        }
+    }
+}
+
+@Composable
+fun VacationSortDropdown(current: String, onSelect: (String) -> Unit){
+    var expanded by remember { mutableStateOf(false) }
+
+    Box{
+        Text(
+            text = "Sort: $current",
+            modifier = Modifier
+                .clickable { expanded = true }
+                .padding(8.dp),
+            style = MaterialTheme.typography.bodyMedium
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("A-Z")},
+                onClick = {
+                    onSelect("A-Z")
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Date")},
+                onClick = {
+                    onSelect("Date")
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Budget")},
+                onClick = {
+                    onSelect("Budget")
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Favorites First")},
+                onClick = {
+                    onSelect("Favorites First")
+                    expanded = false
+                }
+            )
+
         }
     }
 }

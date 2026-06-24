@@ -15,7 +15,7 @@ import com.example.d308vacationplanner.entities.Vacation
 
 @Database(
         entities = [Vacation::class, Excursion::class],
-        version = 8,
+        version = 10,
         exportSchema = false
 )
 @TypeConverters(IntListConverter::class)

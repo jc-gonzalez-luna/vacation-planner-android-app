@@ -1,13 +1,19 @@
 package com.example.d308vacationplanner.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.example.d308vacationplanner.entities.Excursion
 import com.example.d308vacationplanner.entities.Vacation
@@ -37,14 +43,42 @@ fun ExcursionDetailsScreen (
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "Excursion Details",
-                        style = MaterialTheme.typography.headlineMedium
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
                     )
-                }
-            )
+            ){
+                CenterAlignedTopAppBar(
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FlightTakeoff,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Excursion Details",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = Color.White
+                            )
+                        }
+                    },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            containerColor = Color.Transparent
+                        )
+                )
+            }
         }
     ) { padding ->
         Column(

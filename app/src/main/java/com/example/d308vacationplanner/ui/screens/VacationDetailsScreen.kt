@@ -1,6 +1,9 @@
 package com.example.d308vacationplanner.ui.screens
 
+import android.util.Log
+import android.widget.Switch
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,25 +17,40 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlightTakeoff
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.TopAppBarColors
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.d308vacationplanner.entities.Excursion
 import com.example.d308vacationplanner.entities.Vacation
 import com.example.d308vacationplanner.ui.alerts.AlertScheduler
+import com.example.d308vacationplanner.ui.components.AlertReminderSection
+import com.example.d308vacationplanner.ui.components.BaseItem
 import com.example.d308vacationplanner.ui.viewmodel.VacationViewModel
 import com.example.d308vacationplanner.ui.components.BudgetSummaryCard
 import com.example.d308vacationplanner.ui.components.ExcursionListItem
-import com.example.d308vacationplanner.ui.components.SortDropdown
+import com.example.d308vacationplanner.ui.components.ExcursionSortDropdown
+import com.example.d308vacationplanner.ui.components.dialogs.ConfirmDialog
 import com.example.d308vacationplanner.ui.utils.BudgetUtils
 import com.example.d308vacationplanner.ui.utils.DateUtils
 import com.example.d308vacationplanner.ui.utils.ExcursionSorter
 import com.example.d308vacationplanner.ui.utils.Filters
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +65,13 @@ fun VacationDetailsScreen (
 ) {
     val viewModel: VacationViewModel = viewModel()
     val totalSpent = excursions.sumOf { it.price }
+    LaunchedEffect(Unit) {
+        if (vacation != null){
+            viewModel.logPolymorphism(vacation, excursions)
+        }
+    }
+
+
     val durationDays =
         if (!vacation?.startDate.isNullOrBlank() && vacation.endDate.isNotBlank())
             DateUtils.daysBetween(vacation.startDate, vacation.endDate)
@@ -67,9 +92,13 @@ fun VacationDetailsScreen (
     var sortOption by remember { mutableStateOf("Date") }
     var sortAscending by remember { mutableStateOf(true) }
     var searchQuery by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
     var selectedDays by remember { mutableStateOf(savedDays.toSet()) }
-
+    var showSaveConfirm by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showShareConfirm by remember { mutableStateOf(false) }
+    var showAlertConfirm by remember { mutableStateOf(false) }
+    var showAddExcursionConfirm by remember { mutableStateOf(false) }
+    var showSummary by remember { mutableStateOf(false) }
 
     val budgetValue = budget.toDoubleOrNull() ?: 0.0
     val start = DateUtils.parse(startDate)
@@ -78,14 +107,43 @@ fun VacationDetailsScreen (
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "Vacation Details",
-                        style = MaterialTheme.typography.headlineMedium
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primary,
+                                MaterialTheme.colorScheme.primaryContainer
+                            )
+                        )
                     )
-                }
-            )
+            ){
+                CenterAlignedTopAppBar(
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FlightTakeoff,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Vacation Details",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = Color.White
+                            )
+                        }
+
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent
+                    )
+                )
+            }
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
@@ -141,6 +199,56 @@ fun VacationDetailsScreen (
                 Spacer(Modifier.height(16.dp))
             }
             item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        "Show Summary",
+                        style = MaterialTheme.typography.bodyMedium
+
+                        )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = showSummary,
+                        onCheckedChange = { showSummary = it }
+                    )
+                }
+            }
+            item {
+                if (showSummary){
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Vacation Summary",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        val items = mutableListOf<BaseItem>()
+                        if (vacation != null) {
+                            items.add(vacation)
+                            items.addAll(excursions)
+                        }
+                        items.forEach { item ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = item.displaySummary(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(vertical = 2.dp)
+                                )
+                            }
+
+                        }
+                    }
+                }
+            }
+            item {
                 if(vacation != null && vacation.id != 0L){
                     BudgetSummaryCard(
                         budget = vacation.budget,
@@ -149,6 +257,7 @@ fun VacationDetailsScreen (
                         durationDays = durationDays,
                         daysUntilTrip = daysUntilTrip
                     )
+
                 }
 
             }
@@ -174,18 +283,6 @@ fun VacationDetailsScreen (
                             ).show()
                             return@Button
                         }
-
-
-                        /*try {
-                            start = LocalDate.parse(startDate, formatter)
-                            end = LocalDate.parse(endDate, formatter)
-                        } catch (_: Exception) {
-                            Toast.makeText(
-                                context, "Invalid date. Please enter a real calendar date.",
-                                Toast.LENGTH_LONG
-                            ).show()
-                            return@Button
-                        }*/
                         if (start == null || end == null) {
                             Toast.makeText(context, "Invalid calendar date", Toast.LENGTH_LONG).show()
                             return@Button
@@ -198,19 +295,9 @@ fun VacationDetailsScreen (
                             ).show()
                             return@Button
                         }
-
-                        val updated = Vacation(
-                            id = vacation?.id ?: 0,
-                            title = title,
-                            hotel = hotel,
-                            hotelCost = hotelCostValue,
-                            startDate = startDate,
-                            endDate = endDate,
-                            budget = budgetValue,
-                            reminderDays = selectedDays.toList()
-                        )
-                        onSave(updated)
+                        showSaveConfirm = true
                     }) {
+
                         Text("Save")
                     }
                     Spacer(Modifier.width(8.dp))
@@ -224,12 +311,8 @@ fun VacationDetailsScreen (
                                 ).show()
                                 return@Button
                             }
-                            AlertScheduler.cancelVacationAlerts(
-                                context,
-                                vacation.id,
-                                selectedDays
-                            )
-                            onDelete(vacation)
+
+                            showDeleteConfirm = true
                         }) {
                             Text("Delete")
                         }
@@ -241,78 +324,32 @@ fun VacationDetailsScreen (
             }
             item {
                 if (vacation != null) {
-                    Button(onClick = { viewModel.shareVacation(context, vacation) }) {
+                    Button(onClick = {
+                        //viewModel.shareVacation(context, vacation)
+                        showShareConfirm = true
+                    }) {
                         Text("Share")
                     }
                     Spacer(Modifier.height(8.dp))
-                    Button(onClick = { onSetAlerts(vacation, selectedDays) }) {
+                    Button(onClick = {
+                        /*viewModel.setAlerts(
+                            context,
+                            vacation,
+                            selectedDays)*/
+                        showAlertConfirm = true }) {
                         Text("Set Alerts")
                     }
                 }
             }
 
             item {
-                val options = listOf(1,2,3,4,5,6,7)
-                Column {
-                    Text(
-                        "Alert Reminders",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    options.forEach { day ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    selectedDays = if (selectedDays.contains(day)) {
-                                        selectedDays - day
-                                    } else {
-                                        selectedDays + day
-                                    }
-                                }
-                                .padding(vertical = 1.dp)
-                        ) {
-                            Checkbox(
-                                checked = selectedDays.contains(day),
-                                onCheckedChange = { isChecked ->
-                                    /*val updated = selectedDays.toMutableSet()
-                                    if (isChecked){
-                                        updated.add(day)
-                                    }else {
-                                        updated.remove(day)
-                                    }
-                                    selectedDays = updated*/
-                                    selectedDays = if (isChecked){
-                                        selectedDays + day
-                                    }else{
-                                        selectedDays - day
-                                    }
-                                }
-                            )
-                            Text("$day days before")
-                        }
+                AlertReminderSection(
+                    selectedDays = selectedDays,
+                    onDayToggle = { day ->
+                        selectedDays = selectedDays.toggle(day)
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    selectedDays.sorted().forEach { day ->
-                        val previewDate = vacation?.let {
-                            DateUtils.daysBefore(it.startDate,day)
-                        }
-                        previewDate?.let {
-                            Text("- $day days before -> $it")
-                        }
-
-                    }
-
-                }
-            }
-            /*item {
-                Text(
-                    text = "Alert will fire on: $previewDate",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 8.dp)
                 )
-            }*/
+            }
             item {
                 Spacer(Modifier.height(24.dp))
             }
@@ -325,7 +362,7 @@ fun VacationDetailsScreen (
                     Text("Excursions", style = MaterialTheme.typography.titleLarge)
 
                     Row {
-                        SortDropdown(sortOption, onSelect = { sortOption = it }
+                        ExcursionSortDropdown(sortOption, onSelect = { sortOption = it }
                         )
                         Spacer(Modifier.width(10.dp))
                         Text(
@@ -389,12 +426,103 @@ fun VacationDetailsScreen (
                         ).show()
                         return@Button
                     }
-                    onAddExcursion()
+                    showAddExcursionConfirm = true
                 }) {
                     Text("Add Excursion")
                 }
             }
             item { Spacer(Modifier.height(80.dp)) }
+
+
+        }
+        if (showSaveConfirm){
+        ConfirmDialog(
+            title = "Save Vacation",
+            message = "Do you want to save your changes?",
+            confirmText = "Save",
+            onConfirm = {
+                showSaveConfirm = false
+                val updated = Vacation(
+                    id = vacation?.id ?: 0,
+                    title = title,
+                    hotel = hotel,
+                    hotelCost = hotelCostValue,
+                    startDate = startDate,
+                    endDate = endDate,
+                    budget = budgetValue,
+                    reminderDays = selectedDays.toList()
+                )
+                onSave(updated)
+            },
+            onDismiss = { showSaveConfirm = false }
+        )
+
+    }
+        if(showDeleteConfirm && vacation != null){
+        ConfirmDialog(
+            title = "Delete Vacation",
+            message = "This action cannot be undone.",
+            confirmText = "Delete",
+            onConfirm = {
+                showDeleteConfirm = false
+
+                AlertScheduler.cancelVacationAlerts(
+                    context,
+                    vacation.id,
+                    selectedDays
+                )
+                onDelete(vacation)
+            },
+            onDismiss = { showDeleteConfirm = false}
+        )
+    }
+        if(showShareConfirm && vacation != null){
+            ConfirmDialog(
+                title = "Share Vacation",
+                message = "Do you want to share this validation?",
+                confirmText = "Share",
+                onConfirm = {
+                    Log.d("SHARE_TEST", "Excursions count = ${excursions.size}")
+                    showShareConfirm = false
+                    viewModel.shareVacation(
+                        context = context,
+                        vacation = vacation,
+                        excursions = excursions,
+                        totalSpent = totalSpent,
+                        budget = budgetValue
+                    )
+                    //onShare(vacation)
+                },
+                onDismiss = { showShareConfirm = false}
+            )
+        }
+        if (showAlertConfirm && vacation != null) {
+            ConfirmDialog(
+                title = "Enable Alert",
+                message = "We will remind you before your trip starts.",
+                confirmText = "Enable",
+                onConfirm = {
+                    showAlertConfirm = false
+                    viewModel.setAlerts(context, vacation, selectedDays)
+                    //onSetAlerts(vacation)
+                },
+                onDismiss = { showAlertConfirm = false}
+            )
+        }
+        if(showAddExcursionConfirm){
+            ConfirmDialog(
+                title = "Add Excursion",
+                message = "Do you want to add a new excursion",
+                confirmText = "Add",
+                onConfirm = {
+                    showAddExcursionConfirm = false
+                    onAddExcursion()
+                },
+                onDismiss = { showAddExcursionConfirm = false}
+            )
         }
     }
 }
+private fun Set<Int>.toggle(day: Int): Set<Int> =
+if (contains(day)) this - day else this + day
+

@@ -61,7 +61,10 @@ fun AppNavGraph (
             VacationListScreen(
                 vacations = vacations,
                 onAddClick = { navController.navigate("vacation_details/0") },
-                onVacationClick = { id -> navController.navigate("vacation_details/$id") }
+                onVacationClick = { id -> navController.navigate("vacation_details/$id") },
+                onToggleFavorite = { updatedVacation ->
+                    viewModel.updateVacation(updatedVacation)
+                }
             )
         }
         composable("vacation_details/{id}") { backStack ->
@@ -136,25 +139,25 @@ fun AppNavGraph (
                         AlertScheduler.scheduleAlert(
                             context,
                             alertDate,
-                            v.title,
+                            updateVacation.title,
                             "starting_soon_${daysBefore}",
-                            v.id
+                            updateVacation.id
                         )
                     }
 
                     AlertScheduler.scheduleAlert(
                         context,
-                        v.startDate,
-                        v.title,
+                        updateVacation.startDate,
+                        updateVacation.title,
                         "starting",
-                        v.id
+                        updateVacation.id
                     )
                     AlertScheduler.scheduleAlert(
                         context,
-                        v.endDate,
-                        v.title,
+                        updateVacation.endDate,
+                        updateVacation.title,
                         "ending",
-                        v.id
+                        updateVacation.id
                     )
                 }
             )

@@ -39,16 +39,15 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            /*D308VacationPlannerTheme {
-                val navController = androidx.navigation.compose.rememberNavController()
-                AppNavGraph(navController = navController)
-            }*/
-            val navController = rememberNavController()
-            AppNavGraph(
-                navController = navController,
-                deepLinkVacationId = deepLinkVacationId,
-                deepLinkExcursionId = deepLinkExcursionId
-            )
+            D308VacationPlannerTheme {
+                val navController = rememberNavController()
+                AppNavGraph(
+                    navController = navController,
+                    deepLinkVacationId = deepLinkVacationId,
+                    deepLinkExcursionId = deepLinkExcursionId
+                )
+            }
+
         }
 
     }
@@ -114,10 +113,10 @@ fun MainScreen(modifier: Modifier = Modifier, onAddVacation: () -> Unit) {
     }
 }
 
-@Preview(showBackground = true)
+/*@Preview(showBackground = true)
 @Composable
 fun PreviewMainScreen() {
     D308VacationPlannerTheme {
         MainScreen(onAddVacation = {})
     }
-}
+}*/

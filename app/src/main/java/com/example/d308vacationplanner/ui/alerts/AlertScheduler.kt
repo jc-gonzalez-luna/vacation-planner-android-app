@@ -9,9 +9,15 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
+import androidx.collection.intSetOf
+import androidx.compose.ui.text.font.FontVariation
+import com.example.d308vacationplanner.entities.Excursion
+import com.example.d308vacationplanner.ui.alerts.AlertScheduler.computeReminderDate
+import com.example.d308vacationplanner.ui.alerts.AlertScheduler.scheduleAlert
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.absoluteValue
 
 object AlertScheduler {
     fun createNotificationChannel(context: Context){
@@ -24,20 +30,38 @@ object AlertScheduler {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
     }
-
-
-    fun scheduleAlert(context: Context, date: String, title: String, type: String, id: Long) {
-        Log.d("Alert", "scheduleAlert CALLED with:")
-        Log.d("Alert", " date=$date")
-        Log.d("Alert", " title=$title")
-        Log.d("Alert", " type=$type")
-        Log.d("Alert", " id=$id")
+    fun ensureExtractAlarmPermission(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = context.getSystemService(AlarmManager::class.java)
+            if (!alarmManager.canScheduleExactAlarms()) {
+                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                context.startActivity(intent)
+                return false
+            }
+        }
+        return true
+    }
+    fun computeReminderDate(date: String, daysBefore: Int): String {
         val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
-        val localDate = try {
-            LocalDate.parse(date, formatter)
-        } catch (e: Exception) {
-            Log.d("Alert", "Date parse failed for date = $date", e)
-            return
+        val localDate = LocalDate.parse(date, formatter)
+        return localDate.minusDays(daysBefore.toLong()).format(formatter)
+    }
+        fun scheduleAlert(context: Context, date: String, title: String, type: String, id: Long) {
+            Log.d("Alert", "scheduleAlert CALLED with:")
+            Log.d("Alert", " date=$date")
+            Log.d("Alert", " title=$title")
+            Log.d("Alert", " type=$type")
+            Log.d("Alert", " id=$id")
+
+            if (!ensureExtractAlarmPermission(context))return
+
+            val formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy")
+            val localDate = try {
+                LocalDate.parse(date, formatter)
+            } catch (e: Exception) {
+                Log.d("Alert", "Date parse failed for date = $date", e)
+                return
         }
 
         val triggerTime = localDate
@@ -49,13 +73,16 @@ object AlertScheduler {
         Log.d("Alert", "Trigger time (millis) = $triggerTime")
         Log.d("Alert", "Trigger time (human) = ${java.util.Date(triggerTime)}")
 
-        val requestCode = (id.toString() + type + date).hashCode()
+        //val requestCode = (id.toString() + type + date).hashCode()
+        val requestCode = (id * 1000 + type.hashCode().absoluteValue % 1000).toInt()
         Log.d("Alert", "Generated requestCode = $requestCode")
 
         val intent = Intent(context, VacationAlertReceiver::class.java).apply {
-            putExtra("title", title)
+            putExtra("message", title)
+            putExtra("vacationName", title)
             putExtra("type", type)
             putExtra("id", id)
+
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,
@@ -66,18 +93,6 @@ object AlertScheduler {
         Log.d("Alert", "PendingIntent created successfully")
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val canSchedule = alarmManager.canScheduleExactAlarms()
-            Log.d("Alert", "canScheduleExactAlarms = $canSchedule")
-
-            if (!canSchedule) {
-                Log.d("Alert", "Exact alarm permission Not granted. Opening settings.")
-                val settingIntent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                settingIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                context.startActivity(settingIntent)
-                return
-            }
-        }
         try {
             alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
@@ -90,22 +105,6 @@ object AlertScheduler {
         } catch (e: Exception) {
             Log.d("Alert", "Unexpected error while scheduling alarm", e)
         }
-
-
-
-        /*try {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                pendingIntent
-            )
-        } catch (e: SecurityException){
-            val settingIntent = Intent(
-                Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
-            )
-            settingIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            context.startActivity(settingIntent)
-        }*/
     }
     fun cancelAlert(context: Context, requestCode: Int){
         Log.d("Alert", "Cancelling alert with requestCode = $requestCode")
@@ -123,15 +122,54 @@ object AlertScheduler {
     fun cancelVacationAlerts(
         context: Context,
         vacationId: Long,
-        reminderDays: Set<Int>
+        reminderDate: Set<Int>
     ){
         Log.d("Alert", "Cancelling All alert for vacationId=$vacationId")
         cancelAlert(context, vacationId.toInt())
 
         cancelAlert(context, vacationId.toInt() + 100000)
 
-        reminderDays.forEach { day ->
+        reminderDate.forEach { day ->
             cancelAlert(context, vacationId.toInt() + day)
         }
     }
-}
+    fun scheduleAllAlerts(
+        context: Context,
+        vacationId: Long,
+        startDate: String,
+        reminderDays: Set<Int>,
+        excursions: List <Excursion>
+
+    ){
+        scheduleAlert(
+            context,
+            startDate,
+            "Your trip starts today!",
+            "trip_start", vacationId)
+
+        reminderDays.forEach { day ->
+            val reminderDate = computeReminderDate(startDate, day)
+            val message = when (day) {
+                1 -> "Your trip starts tomorrow!"
+                else -> "Your trip starts in $day days!"
+            }
+            scheduleAlert(
+                context,
+                reminderDate,
+                message,
+                "reminder",
+                vacationId + day)
+        }
+
+        excursions.forEach { ex ->
+            scheduleAlert(
+                context,
+                ex.date,
+                ex.title,
+                "excursion",
+                ex.id)
+        }
+    }
+
+
+    }
