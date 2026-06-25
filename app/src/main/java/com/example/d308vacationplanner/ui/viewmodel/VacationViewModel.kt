@@ -190,7 +190,7 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
             Log.d("Summary", item.displaySummary())
         }
     }
-    fun logPolymorphism( vacation: Vacation, excursions: List<Excursion>){
+    fun logVacation( vacation: Vacation, excursions: List<Excursion>){
         val items = mutableListOf<BaseItem>()
         items.add(vacation)
         items.addAll(excursions)

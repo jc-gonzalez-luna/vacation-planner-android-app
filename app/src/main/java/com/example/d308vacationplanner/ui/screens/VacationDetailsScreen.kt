@@ -68,7 +68,7 @@ fun VacationDetailsScreen (
     val totalSpent = excursions.sumOf { it.price }
     LaunchedEffect(Unit) {
         if (vacation != null){
-            viewModel.logPolymorphism(vacation, excursions)
+            viewModel.logVacation(vacation, excursions)
         }
     }
 
@@ -101,10 +101,10 @@ fun VacationDetailsScreen (
     var showAddExcursionConfirm by remember { mutableStateOf(false) }
     var showSummary by remember { mutableStateOf(false) }
 
-    val budgetValue = budget.toDoubleOrNull() ?: 0.0
+    val budgetValue = budget.toDoubleOrNull()
     val start = DateUtils.parse(startDate)
     val end = DateUtils.parse(endDate)
-    val hotelCostValue = hotelCost.toDoubleOrNull() ?: 0.0
+    val hotelCostValue = hotelCost.toDoubleOrNull()
 
     Scaffold(
         topBar = {
@@ -200,54 +200,61 @@ fun VacationDetailsScreen (
                 Spacer(Modifier.height(16.dp))
             }
             item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        "Show Summary",
-                        style = MaterialTheme.typography.bodyMedium
+                if (vacation != null){
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            "Show Summary",
+                            style = MaterialTheme.typography.bodyMedium
 
                         )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Switch(
-                        checked = showSummary,
-                        onCheckedChange = { showSummary = it }
-                    )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Switch(
+                            checked = showSummary,
+                            onCheckedChange = { showSummary = it }
+                        )
+                    }
                 }
+
             }
             item {
-                if (showSummary){
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Vacation Summary",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        val items = mutableListOf<BaseItem>()
-                        if (vacation != null) {
+                if (vacation != null){
+                    if (showSummary){
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                "Vacation Summary",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            val items = mutableListOf<BaseItem>()
                             items.add(vacation)
                             items.addAll(excursions)
-                        }
-                        items.forEach { item ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Text(
-                                    text = item.displaySummary(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(vertical = 2.dp)
-                                )
-                            }
 
+
+
+                            items.forEach { item ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = item.displaySummary(),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.padding(vertical = 2.dp)
+                                    )
+                                }
+
+                            }
                         }
                     }
                 }
+
             }
             item {
                 if(vacation != null && vacation.id != 0L){
@@ -292,6 +299,22 @@ fun VacationDetailsScreen (
                             Toast.makeText(
                                 context,
                                 "End date must be after start date",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@Button
+                        }
+                        if(hotelCostValue == null){
+                            Toast.makeText(
+                                context,
+                                "Hotel cost must be a valid number",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@Button
+                        }
+                        if (budgetValue == null){
+                            Toast.makeText(
+                                context,
+                                "Budget must be a valid number",
                                 Toast.LENGTH_LONG
                             ).show()
                             return@Button
@@ -343,47 +366,57 @@ fun VacationDetailsScreen (
                 }
             }
             item {
-                Button(
-                    onClick = onViewReport,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("View Report")
+                if (vacation != null){
+                    Button(
+                        onClick = onViewReport,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("View Report")
+                    }
+
                 }
             }
 
             item {
-                AlertReminderSection(
-                    selectedDays = selectedDays,
-                    onDayToggle = { day ->
-                        selectedDays = selectedDays.toggle(day)
-                    }
-                )
+                if (vacation != null){
+                    AlertReminderSection(
+                        selectedDays = selectedDays,
+                        onDayToggle = { day ->
+                            selectedDays = selectedDays.toggle(day)
+                        }
+                    )
+                }
+
             }
             item {
                 Spacer(Modifier.height(24.dp))
             }
 
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Excursions", style = MaterialTheme.typography.titleLarge)
+                if(vacation != null){
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Excursions", style = MaterialTheme.typography.titleLarge)
 
-                    Row {
-                        ExcursionSortDropdown(sortOption, onSelect = { sortOption = it }
-                        )
-                        Spacer(Modifier.width(10.dp))
-                        Text(
-                            text = if (sortAscending) "ASC" else "DESC",
-                            modifier = Modifier
-                                .clickable { sortAscending = !sortAscending }
-                                .padding(8.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Row {
+                            ExcursionSortDropdown(sortOption, onSelect = { sortOption = it }
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text(
+                                text = if (sortAscending) "ASC" else "DESC",
+                                modifier = Modifier
+                                    .clickable { sortAscending = !sortAscending }
+                                    .padding(8.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
+
                 }
+
             }
             val filteredExcursions =
                 if (searchQuery.isBlank()) excursions
@@ -391,21 +424,27 @@ fun VacationDetailsScreen (
 
             val sortedExcursions = ExcursionSorter.sort(filteredExcursions, sortOption, sortAscending)
             item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("Search Excursions") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(12.dp))
+                if (vacation != null){
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text("Search Excursions") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(12.dp))
+                }
+
             }
-            if (filteredExcursions.isEmpty()){
-                item {
-                    Text(text = "No excursion found",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(16.dp))
+            if(vacation != null){
+                if (filteredExcursions.isEmpty()){
+                    item {
+                        Text(text = "No excursion found",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(16.dp))
+                    }
                 }
             }
+
 
             items(sortedExcursions) { excursion ->
                 ExcursionListItem(excursion = excursion,
@@ -417,28 +456,31 @@ fun VacationDetailsScreen (
                 Spacer(Modifier.height(16.dp))
             }
             item {
-                Button(onClick = {
-                    if (vacation == null || vacation.id == 0L) {
-                        Toast.makeText(
-                            context,
-                            "Please save the vacation before adding excursions.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        return@Button
+                if (vacation != null){
+                    Button(onClick = {
+                        if (vacation == null || vacation.id == 0L) {
+                            Toast.makeText(
+                                context,
+                                "Please save the vacation before adding excursions.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@Button
+                        }
+                        val budgetValue = BudgetUtils.parseBudget(budget)
+                        if (totalSpent >= budgetValue) {
+                            Toast.makeText(
+                                context,
+                                "Cannot add excursion. Budget exceeded",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@Button
+                        }
+                        showAddExcursionConfirm = true
+                    }) {
+                        Text("Add Excursion")
                     }
-                    val budgetValue = BudgetUtils.parseBudget(budget)
-                    if (totalSpent >= budgetValue) {
-                        Toast.makeText(
-                            context,
-                            "Cannot add excursion. Budget exceeded",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        return@Button
-                    }
-                    showAddExcursionConfirm = true
-                }) {
-                    Text("Add Excursion")
                 }
+
             }
             item { Spacer(Modifier.height(80.dp)) }
 
@@ -455,10 +497,10 @@ fun VacationDetailsScreen (
                     id = vacation?.id ?: 0,
                     title = title,
                     hotel = hotel,
-                    hotelCost = hotelCostValue,
+                    hotelCost = hotelCostValue!!,
                     startDate = startDate,
                     endDate = endDate,
-                    budget = budgetValue,
+                    budget = budgetValue!!,
                     reminderDays = selectedDays.toList()
                 )
                 onSave(updated)
@@ -498,7 +540,7 @@ fun VacationDetailsScreen (
                         vacation = vacation,
                         excursions = excursions,
                         totalSpent = totalSpent,
-                        budget = budgetValue
+                        budget = budgetValue!!
                     )
                     //onShare(vacation)
                 },

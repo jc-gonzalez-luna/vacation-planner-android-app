@@ -17,7 +17,7 @@ interface VacationDao {
     suspend fun insert(vacation: Vacation): Long
 
     @Query("SELECT * FROM vacations WHERE id = :id LIMIT 1")
-    fun getVacationById(id: Long): Flow<Vacation>
+    fun getVacationById(id: Long): Flow<Vacation?>
 
 
     @Update
