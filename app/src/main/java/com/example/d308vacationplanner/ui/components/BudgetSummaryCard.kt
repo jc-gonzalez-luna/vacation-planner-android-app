@@ -62,7 +62,7 @@ fun BudgetSummaryCard (
     ){
         Column(modifier = Modifier.padding(16.dp)){
 
-            Text("Vacation Budget", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Text("Trip Financial Summary", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(

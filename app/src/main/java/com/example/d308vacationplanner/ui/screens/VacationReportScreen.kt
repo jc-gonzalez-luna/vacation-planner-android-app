@@ -1,5 +1,6 @@
 package com.example.d308vacationplanner.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +14,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.FlightTakeoff
+import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -28,10 +31,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.d308vacationplanner.entities.Excursion
 import com.example.d308vacationplanner.entities.Vacation
 import java.text.NumberFormat
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +48,8 @@ fun VacationReportScreen (
     val currency = NumberFormat.getCurrencyInstance()
     val excursionTotal = excursions.sumOf { it.price }
     val remaining = vacation.budget - vacation.hotelCost - excursionTotal
+    val totalTripCost = excursionTotal + vacation.hotelCost
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -81,7 +88,7 @@ fun VacationReportScreen (
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
                                 tint = Color.White
                             )
@@ -100,35 +107,82 @@ fun VacationReportScreen (
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text("Vacation Summary", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Generated on: ${LocalDate.now()}",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+            Spacer(Modifier.height(16.dp))
 
-            Text("Title: ${vacation.title}")
-            Text("Hotel: ${vacation.hotel}")
-            Text("Dates: ${vacation.startDate} -> ${vacation.endDate}")
-            Text("Budget: ${currency.format(vacation.budget)}")
+            Button(
+                onClick = {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, "Vacation Report: ${vacation.title}")
+                        val excursionLines = excursions.joinToString("\n"){
+                            "• ${it.title} - ${currency.format(it.price)}"
+                        }
+                        val reportText = """
+                     
+                                Vacation Report
+                                
+                                Title: ${vacation.title}
+                                Hotel: ${vacation.hotel}
+                                Dates: ${vacation.startDate} -> ${vacation.endDate}
+                                Budget: ${currency.format(vacation.budget)}
 
-            Spacer(Modifier.height(24.dp))
+                                Excursions:
+                                $excursionLines
+                                
+                                Total Trip Cost:  ${currency.format(totalTripCost)}
+                                Total Excursion Cost: ${currency.format(excursionTotal)}
 
-            Text("Excursions", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
+                                Budget breakdown
+                                Hotel Cost: ${currency.format(vacation.hotelCost)}
+                                Excursions Cost: ${currency.format(excursionTotal)}
+                                Remaining: ${currency.format(remaining)}
+                                """.trimIndent()
+                               putExtra(Intent.EXTRA_TEXT, reportText)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Share Vacation Report"))
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ){
+                         Text("Share Report")
+                    }
+                    Spacer(Modifier.height(20.dp))
+            
+                    Text("Vacation Summary", style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.height(8.dp))
 
-            excursions.forEach {
-                Text("• ${it.title} - ${currency.format(excursionTotal)}")
+                    Text("Title: ${vacation.title}")
+                    Text("Hotel: ${vacation.hotel}")
+                    Text("Dates: ${vacation.startDate} -> ${vacation.endDate}")
+                    Text("Budget: ${currency.format(vacation.budget)}")
+
+                    Spacer(Modifier.height(24.dp))
+
+                    Text("Excursions", style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.height(8.dp))
+
+                    excursions.forEach {
+                        Text("• ${it.title} - ${currency.format(it.price)}")
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Text("Total Trip Cost:  ${currency.format(totalTripCost)}")
+
+                    Spacer(Modifier.height(8.dp))
+                    Text("Total Excursion Cost: ${currency.format(excursionTotal)}")
+
+                    Spacer(Modifier.height(24.dp))
+
+                    Text("Budget breakdown", style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.height(8.dp))
+
+                    Text("Hotel Cost: ${currency.format(vacation.hotelCost)}")
+                    Text("Excursions: ${currency.format(excursionTotal)}")
+                    Text("Remaining: ${currency.format(remaining)}")
+                }
             }
-
-            Spacer(Modifier.height(8.dp))
-            Text("Total Excursion Cost: ${currency.format(excursionTotal)}")
-
-            Spacer(Modifier.height(24.dp))
-
-            Text("Budget breakdown", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-
-            Text("Hotel Cost: ${currency.format(vacation.hotelCost)}")
-            Text("Excursions: ${currency.format(excursionTotal)}")
-            Text("Remaining: ${currency.format(remaining)}")
         }
-
-    }
-}
