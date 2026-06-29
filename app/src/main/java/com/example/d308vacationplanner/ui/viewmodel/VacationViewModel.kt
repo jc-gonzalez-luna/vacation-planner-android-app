@@ -168,11 +168,18 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
     fun setAlerts(
         context: Context,
         vacation: Vacation,
-        reminderDays: Set<Int>
+        reminderDays: Set<Int>,
+        triggerByUser: Boolean
     ) {
+
+        Log.d("Alert_debug", "setAlerts() CALLED for vacation ${vacation.id} with reminderDays=$reminderDays")
+        if (!triggerByUser) {
+            Log.d("ALERT_DEBUG", "triggerByUser=false → NOT scheduling alerts")
+            return
+        }
         viewModelScope.launch {
-            excursionRepository.getExcursionsForVacation(vacation.id)
-                .collectLatest { excursions ->
+            val excursions = excursionRepository.getExcursionsForVacation(vacation.id).first()
+                    Log.d("ALERT_DEBUG", "collectLatest FIRED. excursions=${excursions.size}")
 
             AlertScheduler.scheduleAllAlerts(
                 context = context,
@@ -181,10 +188,11 @@ class VacationViewModel (application: Application) : AndroidViewModel(applicatio
                 reminderDays = reminderDays,
                 excursions = excursions
             )
+                    Log.d("ALERT_DEBUG", "scheduleAllAlerts() EXECUTED")
         }
         }
 
-    }
+
     fun printSummaries(items: List<BaseItem>){
         items.forEach { item ->
             Log.d("Summary", item.displaySummary())

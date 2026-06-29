@@ -23,16 +23,18 @@ import com.example.d308vacationplanner.ui.theme.D308VacationPlannerTheme
 import android.Manifest
 import android.content.Intent
 import android.util.Log
+import androidx.core.app.NotificationManagerCompat
 import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d("Main_deeplink", "onCreate fired with extras: ${intent?.extras}")
         super.onCreate(savedInstanceState)
 
         AlertScheduler.createNotificationChannel(this)
-        requestNotificationPermission()
+
 
         val deepLinkVacationId = intent.getLongExtra("vacationId", -1L)
         val deepLinkExcursionId = intent.getLongExtra("excursionId", -1L)
@@ -70,35 +72,23 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
-    private fun requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= 33) {
-            if (ContextCompat.checkSelfPermission(
-                this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ){
-                requestPermissionsLauncher.launch(
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS)
-                )
-            }
+
+    var pendingAlertSetup: (() -> Unit)? = null
+    var returnedFromNotificationSettings = false
+    override fun onResume(){
+        super.onResume()
+
+        if (!returnedFromNotificationSettings) return
+
+        val hasPermission = NotificationManagerCompat.from(this).areNotificationsEnabled()
+
+        if (hasPermission && pendingAlertSetup != null){
+            pendingAlertSetup?.invoke()
+            pendingAlertSetup = null
         }
+        returnedFromNotificationSettings = false
     }
-    private val requestPermissionsLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ){
 
-        }
-    /*private fun createNotificationChannel() {
-            val channel = NotificationChannel(
-                "vacation_channel",
-                "Vacation Alerts",
-                NotificationManager.IMPORTANCE_HIGH
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-
-    }*/
 }
 
 

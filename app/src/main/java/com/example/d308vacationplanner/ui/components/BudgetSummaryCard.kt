@@ -33,8 +33,8 @@ fun BudgetSummaryCard (
 
     val progress = when {
         budget <= 0 -> 0f
-        totalSpent <= 0 -> 0f
-        totalSpent >= budget -> 1f
+        totalTripCost <= 0 -> 0f
+        totalTripCost >= budget -> 1f
         else -> (totalTripCost/budget).toFloat()
     }
     val animatedProgress by animateFloatAsState(

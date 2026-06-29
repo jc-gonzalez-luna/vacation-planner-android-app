@@ -31,6 +31,13 @@
             android:exported="true"
             android:enabled="true"
             android:directBootAware="true"/>
+        <receiver
+            android:name=".ui.alerts.ExcursionAlertReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.d308vacationplanner.EXCURSION_ALERT" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

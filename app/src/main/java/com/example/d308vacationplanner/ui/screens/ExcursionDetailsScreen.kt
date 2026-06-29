@@ -1,5 +1,6 @@
 package com.example.d308vacationplanner.ui.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.material3.*
@@ -87,7 +88,7 @@ fun ExcursionDetailsScreen (
                 .padding(16.dp)
         ) {
 
-            LaunchedEffect(excursion?.id) {
+            LaunchedEffect(Unit) {
                 if (excursion != null) {
                     title = excursion.title
                     date = excursion.date
@@ -131,13 +132,14 @@ fun ExcursionDetailsScreen (
                 )
                 Spacer(Modifier.height(16.dp))
 
-                val previewDate = excursion?.let {
+                /*val previewDate = excursion?.let {
                     it.date
                 }
                 previewDate?.let {
                     Text("- Alert will fire on: $it")
-                }
+                }*/
                 Button(onClick = {
+                    Log.d("ALERT_DEBUG", "Excursion SAVE button clicked")
                     if (title.isBlank()) {
                         Toast.makeText(
                             context,
@@ -222,6 +224,7 @@ fun ExcursionDetailsScreen (
                         price = priceValue,
                         notes = notes
                     )
+                    Log.d("ALERT_DEBUG", "Calling onSave(updated) for excursion ${updated.id}")
                     onSave(updated)
                 }) { Text("Save") }
                 if (excursion != null) {

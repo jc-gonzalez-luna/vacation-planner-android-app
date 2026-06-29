@@ -1,5 +1,9 @@
 package com.example.d308vacationplanner.ui.screens
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import android.widget.Switch
 import android.widget.Toast
@@ -35,9 +39,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.d308vacationplanner.entities.Excursion
 import com.example.d308vacationplanner.entities.Vacation
+import com.example.d308vacationplanner.ui.MainActivity
 import com.example.d308vacationplanner.ui.alerts.AlertScheduler
 import com.example.d308vacationplanner.ui.components.AlertReminderSection
 import com.example.d308vacationplanner.ui.components.BaseItem
@@ -547,18 +554,52 @@ fun VacationDetailsScreen (
                 onDismiss = { showShareConfirm = false}
             )
         }
+
         if (showAlertConfirm && vacation != null) {
-            ConfirmDialog(
-                title = "Enable Alert",
-                message = "We will remind you before your trip starts.",
-                confirmText = "Enable",
-                onConfirm = {
-                    showAlertConfirm = false
-                    viewModel.setAlerts(context, vacation, selectedDays)
-                    //onSetAlerts(vacation)
-                },
-                onDismiss = { showAlertConfirm = false}
-            )
+            key(showAlertConfirm) {
+                ConfirmDialog(
+                    title = "Enable Alert",
+                    message = "We will remind you before your trip starts.",
+                    confirmText = "Enable",
+                    onConfirm = {
+                        showAlertConfirm = false
+
+                        val activity = context as MainActivity
+                        val hasPermission = NotificationManagerCompat.from(context).areNotificationsEnabled()
+
+                        if (!hasPermission) {
+
+                            activity.pendingAlertSetup = {
+                                viewModel.setAlerts(context, vacation, selectedDays, triggerByUser = true)
+                                val updated = vacation.copy(
+                                    reminderDays = selectedDays.toList()
+                                )
+                                viewModel.updateVacation(updated)
+                            }
+
+                            activity.returnedFromNotificationSettings = true
+
+                            val intent =
+                                Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                    putExtra(
+                                        android.provider.Settings.EXTRA_APP_PACKAGE,
+                                        context.packageName
+                                    )
+                                }
+                            context.startActivity(intent)
+                            return@ConfirmDialog
+                        }
+
+
+                        viewModel.setAlerts(context, vacation, selectedDays, triggerByUser = true)
+                        val updated = vacation.copy(
+                            reminderDays = selectedDays.toList()
+                        )
+                        viewModel.updateVacation(updated)
+                    },
+                    onDismiss = { showAlertConfirm = false }
+                )
+            }
         }
         if(showAddExcursionConfirm){
             ConfirmDialog(
@@ -566,6 +607,9 @@ fun VacationDetailsScreen (
                 message = "Do you want to add a new excursion",
                 confirmText = "Add",
                 onConfirm = {
+                    val activity = context as MainActivity
+                    activity.pendingAlertSetup = null
+                    showAlertConfirm = false
                     showAddExcursionConfirm = false
                     onAddExcursion()
                 },

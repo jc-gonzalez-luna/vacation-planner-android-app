@@ -50,17 +50,18 @@ class VacationAlertReceiver : BroadcastReceiver() {
             }
 
 
-        val notification = NotificationCompat.Builder(context, "vacation_alerts")
+        val notificationBuilder = NotificationCompat.Builder(context, "vacation_alerts")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("Vacation Alert ")
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(openPendingIntent)
-            .setGroup("vacation_alerts_group")
-            .build()
 
-
+        if (type != "excursion"){
+            notificationBuilder.setGroup("vacation_alerts_group")
+        }
+        val notification = notificationBuilder.build()
 
         val summary = NotificationCompat.Builder(context, "vacation_alerts")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -81,7 +82,9 @@ class VacationAlertReceiver : BroadcastReceiver() {
             val manager = NotificationManagerCompat.from(context)
             Thread.sleep(150)
             manager.notify(requestCode, notification)
-            manager.notify(0, summary)
+            if (type != "excursion") {
+                manager.notify(0, summary)
+            }
         }
         //NotificationManagerCompat.from(context).notify((0..999999).random(),notification)
     }
