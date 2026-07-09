@@ -43,8 +43,8 @@ app/
 │   │       │   ├── navigation/
 │   │       │   ├── screens/
 │   │       │   ├── theme/
-│   │       │   └── utils/
-│   │       └── viewmodel/
+│   │       │   ├── utils/
+│   │       │   └── viewmodel/
 │   │       └── MainActivity.kt
 
 ## Getting Started
