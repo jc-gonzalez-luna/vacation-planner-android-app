@@ -1,29 +1,85 @@
-<strong>**DO NOT DISTRIBUTE OR PUBLICLY POST SOLUTIONS TO THESE LABS. MAKE ALL FORKS OF THIS REPOSITORY WITH SOLUTION CODE PRIVATE. PLEASE REFER TO THE STUDENT CODE OF CONDUCT AND ETHICAL EXPECTATIONS FOR COLLEGE OF INFORMATION TECHNOLOGY STUDENTS FOR SPECIFICS. **</strong>
+# Vacation Planner Android App
 
-# WESTERN GOVERNORS UNIVERSITY 
-## D424 – SOFTWARE ENGINEERING CAPSTONE
-Welcome to Software Engineering Capstone! This is an opportunity for students to develop full stack software engineering documentation and applications. They will execute documentation, unit testing, revision of software applications, and deploy software applications with scripts and containers on a cloud platform.
+A modern Android application built with Kotlin, Jetpack Compose, Room, and MVVM architecture.  
+Developed as part of the WGU Software Engineering Capstone (D424).  
+The app allows users to plan vacations, store trip details locally, and interact with a clean, responsive UI.
 
-FOR SPECIFIC TASK INSTRUCTIONS AND REQUIREMENTS FOR THIS ASSESSMENT, PLEASE REFER TO THE COURSE PAGE.
-BASIC INSTRUCTIONS
-For this assessment, you will deploy your developed full stack software product to a web service of your choice.
+## Features
+
+- Create, edit, and delete vacation plans
+- Offline storage using Room database
+- Jetpack Compose UI with modern Android design patterns
+- MVVM architecture with ViewModel separation
+- Destination search and trip detail views
+- Local persistence for trip lists
+- Lightweight, fast, and built with current Android best practices
+
+## Tech Stack
+
+| Category | Technology |
+|---------|------------|
+| Language | Kotlin |
+| UI | Jetpack Compose |
+| Architecture | MVVM + ViewModel |
+| Local Storage | Room Database |
+| IDE | Android Studio |
+| Build System | Gradle |
+
+## Project Structure
+
+app/
+├── androidTest/
+├── main/
+│   ├── manifests/
+│   ├── kotlin+java/
+│   │   └── com.example.d308vacationplanner/
+│   │       ├── dao/
+│   │       ├── database/
+│   │       ├── entities/
+│   │       ├── repository/
+│   │       ├── ui/
+│   │       │   ├── alerts/
+│   │       │   ├── components/
+│   │       │   ├── navigation/
+│   │       │   ├── screens/
+│   │       │   ├── theme/
+│   │       │   └── utils/
+│   │       └── viewmodel/
+│   │       └── MainActivity.kt
+
+## Getting Started
+
+### Clone the repository
+
+git clone https://github.com/jc-gonzalez-luna/vacation-planner-android-app.git
+
+### Open in Android Studio
+
+1. Open Android Studio
+2. Select "Open" and choose the project folder
+3. Allow Gradle to sync
+4. Build and run on an emulator or physical device
 
 
-## SUPPLEMENTAL RESOURCES  
-1.	How to clone a project to IntelliJ using Git?
+## Testing
 
-> Ensure that you have Git installed on your system and that IntelliJ is installed using [Toolbox](https://www.jetbrains.com/toolbox-app/). Make sure that you are using version 2022.3.2. Once this has been confirmed, click the clone button and use the 'IntelliJ IDEA (HTTPS)' button. This will open IntelliJ with a prompt to clone the proejct. Save it in a safe location for the directory and press clone. IntelliJ will prompt you for your credentials. Enter in your WGU Credentials and the project will be cloned onto your local machine.  
+- Unit tests for ViewModels
+- DAO tests for Room database
+- Optional UI tests for Compose components
 
-2. How to create a branch and start Development?
+## License
 
-- GitLab method
-> Press the '+' button located near your branch name. In the dropdown list, press the 'New branch' button. This will allow you to create a name for your branch. Once the branch has been named, you can select 'Create Branch' to push the branch to your repository.
+MIT License. You are free to use, modify, and distribute this project.
 
-- IntelliJ method
-> In IntelliJ, Go to the 'Git' button on the top toolbar. Select the new branch option and create a name for the branch. Make sure checkout branch is selected and press create. You can now add a commit message and push the new branch to the local repo.
+## Acknowledgments
 
-## SUPPORT
-If you need additional support, please navigate to the course page and reach out to your course instructor.
+This project was developed as part of the WGU Software Engineering Capstone (D424), demonstrating modern Android development practices including Compose, MVVM, and offline-first architecture.
 
-## FUTURE USE
-Take this opportunity to create or add to a simple resume portfolio to highlight and showcase your work for future use in career search, experience, and education!
+## Portfolio
+
+This project is featured on my portfolio:  
+https://jc-gonzalez-luna.github.io/portfolio
+
+
+
+
