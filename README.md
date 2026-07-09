@@ -26,7 +26,7 @@ The app allows users to plan vacations, store trip details locally, and interact
 | Build System | Gradle |
 
 ## Project Structure
-
+<pre>
 app/
 ├── androidTest/
 ├── main/
@@ -46,7 +46,7 @@ app/
 │   │       │   ├── utils/
 │   │       │   └── viewmodel/
 │   │       └── MainActivity.kt
-
+</pre>
 ## Getting Started
 
 ### Clone the repository
